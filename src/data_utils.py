@@ -1,3 +1,5 @@
+"""This module is meant for handling all data being passed into the model"""
+
 import re
 
 def clean_text(text: str) -> str:
