@@ -2,3 +2,4 @@ __pycache__
 .venv
 plan.md
 journal.md
+database.db

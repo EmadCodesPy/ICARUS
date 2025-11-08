@@ -3,6 +3,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch
 import logging
 
+model_name_qwen = 'Qwen/Qwen3-4B-Thinking-2507'
+model_name_mistral = 'mistralai/Mistral-7B-Instruct-v0.3'
+
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s'
@@ -25,7 +29,7 @@ class ModelLoader:
         :param model_name: The name of the model directly from huggingface
         """
         self.model_name = model_name
-
+        self.messages = []
         try:
             self.model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=bnb_config, dtype='auto', device_map='auto', local_files_only=True)
             logger.info('Model loaded successfully')
@@ -75,6 +79,11 @@ class ModelLoader:
         :param temperature: The temperature of the responses you would like
         :return : A string containing the reply
         """
+        self.messages.append({'role': 'user', 'content': prompt})
+        prompt = self.tokenizer.apply_chat_template(self.messages,
+                                                    tokenize=False,
+                                                    add_generation_prompt=True,
+                                                    )
         inputs = self.tokenizer(prompt, return_tensors='pt').to(self.device)
         with torch.inference_mode():
             outputs = self.model.generate(**inputs, 
@@ -82,12 +91,13 @@ class ModelLoader:
                                         temperature=temperature, 
                                         do_sample=True,
                                         eos_token_id=self.tokenizer.eos_token_id,
+                                        pad_token_id=self.tokenizer.pad_token_id,
                                         top_p=0.95,
                                         top_k=20,
-                                        min_p=0,
                                         repetition_penalty=1.1
                                         )
-        text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        text = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
+        self.messages.append({'role': 'assistant', 'content': text})
         logger.info('Prompt reply generated')
         return text
     
@@ -106,8 +116,9 @@ class ModelLoader:
 
 #Below is for testing purposes
 if __name__ == '__main__':
-    model = ModelLoader("Qwen/Qwen3-4B-Thinking-2507")
+    model = ModelLoader(model_name_mistral)
 
     while True:
         inp = input('question: ')
-        print(model.generate(inp,max_new_tokens=100, temperature=0.2))
+
+        print(model.generate(inp,max_new_tokens=1000, temperature=0.7))
