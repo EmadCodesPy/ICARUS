@@ -38,7 +38,7 @@ class ModelLoader:
             raise
         
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
             logger.info('Tokenizer loaded successfully')
         except Exception:
             logger.error('Failed to load model', exc_info=True)
@@ -64,7 +64,7 @@ class ModelLoader:
             raise
         
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
             logger.info('Tokenizer loaded successfully')
         except Exception:
             logger.error('Failed to load model', exc_info=True)
@@ -94,7 +94,8 @@ class ModelLoader:
                                         pad_token_id=self.tokenizer.pad_token_id,
                                         top_p=0.95,
                                         top_k=20,
-                                        repetition_penalty=1.1
+                                        repetition_penalty=1.1,
+                                        use_cache=True
                                         )
         text = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
         self.messages.append({'role': 'assistant', 'content': text})
@@ -114,11 +115,10 @@ class ModelLoader:
             print("No CUDA GPU detected, using CPU")
             
 
-#Below is for testing purposes
 if __name__ == '__main__':
     model = ModelLoader(model_name_mistral)
 
     while True:
         inp = input('question: ')
 
-        print(model.generate(inp,max_new_tokens=1000, temperature=0.7))
+        print(model.generate(inp,max_new_tokens=512, temperature=0.7))
