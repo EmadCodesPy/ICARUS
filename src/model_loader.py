@@ -72,7 +72,7 @@ class ModelLoader:
         
         logger.info(f'New model loaded: {model_name}')
     
-    def generate(self, prompt: str, max_new_tokens: int = 120, temperature: float = 0.7) -> str:
+    def generate(self, prompt: str, max_new_tokens: int = 512, temperature: float = 0.7) -> str:
         """Function for generating a response
         :param prompt: The prompt you would like to ask the model
         :param max_new_tokens: The maximum number of reply tokens you would like to provide
